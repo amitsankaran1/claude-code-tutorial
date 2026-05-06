@@ -480,158 +480,426 @@ export const CHEATSHEET: { command: string; useWhen: string }[] = [
   { command: "/init", useWhen: "Generate a CLAUDE.md for a new repo." },
 ];
 
-export type QuizType = "knowledge" | "skills";
-
-export type QuizQuestion = {
-  type: QuizType;
-  q: string;
-  a: string;
+export type TerminalExerciseData = {
+  kind: "terminal";
+  id: string;
+  task: string;
+  prompt?: string;
+  expected: string[];
+  hints?: string[];
+  successOutput?: string;
+  history?: { line: string; output?: string }[];
 };
 
-export const QUIZZES: Record<string, QuizQuestion[]> = {
+export type MultipleChoiceData = {
+  kind: "choice";
+  id: string;
+  question: string;
+  options: { text: string; correct?: boolean }[];
+  explanation: string;
+};
+
+export type RevealExerciseData = {
+  kind: "reveal";
+  id: string;
+  task: string;
+  answer: string;
+};
+
+export type Exercise =
+  | TerminalExerciseData
+  | MultipleChoiceData
+  | RevealExerciseData;
+
+export const EXERCISES: Record<string, Exercise[]> = {
   "terminal-101": [
     {
-      type: "knowledge",
-      q: "A colleague's terminal shows `▎ what's in this file?` — what kind of prompt is that, and how do you know?",
-      a: "A Claude prompt — they're inside a Claude Code session asking a question. The shell prompt would end in `$` or `%`. The `▎` glyph is Claude's input marker, distinct from the shell.",
+      kind: "choice",
+      id: "terminal-101-1",
+      question:
+        "Your colleague's terminal shows `▎ what's in this file?`. What kind of prompt is that?",
+      options: [
+        { text: "A shell prompt — they're at the command line." },
+        {
+          text: "A Claude prompt — they're inside a Claude Code session.",
+          correct: true,
+        },
+        { text: "A Python REPL prompt." },
+        { text: "A vim command prompt." },
+      ],
+      explanation:
+        "The `▎` glyph is Claude Code's input marker. The shell prompt ends in `$` or `%`; Python's REPL is `>>>`; vim's command-mode prompt starts with `:`.",
     },
     {
-      type: "knowledge",
-      q: "Someone says \"vim is a TUI but `git status` is a CLI.\" What's the practical difference?",
-      a: "A CLI runs once: prints output, exits. A TUI takes over the terminal — it draws an interactive layout, lets you navigate with arrow keys, updates live, and only exits when you quit it. Same window; different mode of use.",
+      kind: "choice",
+      id: "terminal-101-2",
+      question: "Which is the most accurate distinction between a CLI and a TUI?",
+      options: [
+        { text: "A CLI uses one window; a TUI uses many." },
+        {
+          text: "A CLI runs once and exits; a TUI takes over the terminal until you quit it.",
+          correct: true,
+        },
+        { text: "A CLI is older; a TUI is newer." },
+        { text: "A CLI uses the mouse; a TUI uses only the keyboard." },
+      ],
+      explanation:
+        "CLIs are one-shot (`ls`, `git status`). TUIs draw an interactive layout you navigate with arrow keys (vim, htop, lazygit, Claude Code). Same window; different mode of use.",
     },
     {
-      type: "skills",
-      q: "You're in a fresh terminal and want to start a Claude Code session scoped to your project. What two commands?",
-      a: "`cd ~/path/to/project` then `claude`. Starting from the project directory scopes Claude to that repo's `.claude/` config and gives it the right working directory.",
+      kind: "terminal",
+      id: "terminal-101-3",
+      task: "You've already changed into your project directory. Start a Claude Code session — write the single command.",
+      prompt: "$ ",
+      history: [
+        { line: "pwd", output: "/Users/asankaran/projects/my-app" },
+      ],
+      expected: ["claude"],
+      hints: [
+        "It's just the binary name — no flags, no arguments.",
+      ],
+      successOutput:
+        "▎ Welcome to Claude Code. Type your prompt or /help for commands.",
     },
   ],
   "big-picture": [
     {
-      type: "knowledge",
-      q: "Map each verb to the primitive(s) it embodies: package, delegate, orchestrate.",
-      a: "Package → Skills, Plugins, Conductors. Delegate → Subagents, Agent Teams. Orchestrate → Hooks, /loop, Monitor, MCP servers. The whole feature surface is one of those three moves.",
+      kind: "choice",
+      id: "big-picture-1",
+      question:
+        "Which set correctly maps Claude Code's three core verbs to its primitives?",
+      options: [
+        {
+          text: "Package = Skills, Plugins, Conductors · Delegate = Subagents, Agent Teams · Orchestrate = Hooks, Loops, Monitor, MCP",
+          correct: true,
+        },
+        {
+          text: "Package = Hooks, Loops · Delegate = Skills · Orchestrate = Subagents",
+        },
+        {
+          text: "Package = MCP · Delegate = Plugins · Orchestrate = Skills",
+        },
+        {
+          text: "Package = Subagents · Delegate = Hooks · Orchestrate = Plugins",
+        },
+      ],
+      explanation:
+        "Every primitive is one of those three moves: turn-into-callable (package), spin-off-context (delegate), or automate-and-connect (orchestrate). Internalize this and the rest of the surface is just memorization.",
     },
   ],
   primitives: [
     {
-      type: "skills",
-      q: "Connect Claude Code to a Linear MCP server at `https://mcp.linear.app`. Write the exact command.",
-      a: "`claude mcp add linear --transport http https://mcp.linear.app`",
+      kind: "terminal",
+      id: "primitives-1",
+      task: "Connect Claude Code to a Linear MCP server at `https://mcp.linear.app` over HTTP transport.",
+      prompt: "$ ",
+      expected: [
+        "claude mcp add linear --transport http https://mcp.linear.app",
+        "claude mcp add linear https://mcp.linear.app --transport http",
+      ],
+      hints: [
+        "The base command is `claude mcp add`.",
+        "After that comes the local name for the server (your choice — call it `linear`).",
+        "You need the `--transport http` flag and the URL.",
+      ],
+      successOutput: "✓ Added MCP server 'linear' (http transport).",
     },
     {
-      type: "skills",
-      q: "You've typed the same code-review-checklist prompt for the fourth time. Where on disk does a personal Skill called `review-checklist` live?",
-      a: "`~/.claude/skills/review-checklist/SKILL.md`. Project-scoped would be `.claude/skills/review-checklist/SKILL.md` inside the repo — same shape, different home.",
+      kind: "terminal",
+      id: "primitives-2",
+      task: "You're creating a personal Skill called `review-checklist`. Type the file path you'd create on disk for the SKILL.md file (use `~` for your home).",
+      prompt: "",
+      expected: ["~/.claude/skills/review-checklist/SKILL.md"],
+      hints: [
+        "Personal skills live under your home directory's `.claude/` folder.",
+        "Each skill has its own subdirectory; the file inside is named SKILL.md (uppercase).",
+      ],
+      successOutput: "Created: ~/.claude/skills/review-checklist/SKILL.md",
     },
     {
-      type: "knowledge",
-      q: "Your project's `.claude/settings.json` runs typecheck before every commit. What changes if you move that config to `~/.claude/settings.json` instead?",
-      a: "It applies to every project on your machine, not just this one. Project-level settings are scoped to the repo; home-level settings are global. Typecheck commands rarely match across projects, so this kind of config almost always wants the project-level home — the global version silently fails on repos without that script.",
+      kind: "choice",
+      id: "primitives-3",
+      question:
+        "Your project's `.claude/settings.json` runs typecheck before every commit. What changes if you move that config to `~/.claude/settings.json`?",
+      options: [
+        { text: "Nothing — the two paths are aliases." },
+        {
+          text: "It applies to every project on your machine, not just this one.",
+          correct: true,
+        },
+        { text: "It stops working — `~/.claude/` doesn't support hooks." },
+        { text: "It applies only to the current Claude session." },
+      ],
+      explanation:
+        "Project-level settings are scoped to the repo; home-level settings are global. A home-level typecheck hook fires on every project — most would silently fail because they don't have that script.",
     },
     {
-      type: "knowledge",
-      q: "When does reaching for a Subagent make the situation worse, not better?",
-      a: "When the task is small. Subagent overhead — context handoff, summary loss, latency — exceeds the value of preserving main-session context for trivial lookups. For a two-line grep, just grep. Save subagents for messy, open-ended exploration.",
+      kind: "choice",
+      id: "primitives-4",
+      question:
+        "When does spinning up a Subagent make the situation worse, not better?",
+      options: [
+        { text: "When you're using xhigh effort." },
+        {
+          text: "When the task is small (e.g. a quick grep, a two-step lookup).",
+          correct: true,
+        },
+        { text: "When the codebase has more than 100 files." },
+        { text: "When the task involves multiple file types." },
+      ],
+      explanation:
+        "Subagent overhead — context handoff, summary loss, latency — exceeds the value for trivial tasks. For a two-line grep, just grep. Save subagents for messy, open-ended exploration.",
     },
   ],
   automation: [
     {
-      type: "skills",
-      q: "Run `/check-deploy` every five minutes. Write the command.",
-      a: "`/loop 5m /check-deploy`. Set a stop condition before you start it — \"loop forever and surface anything interesting\" is a notification firehose with no off switch.",
+      kind: "terminal",
+      id: "automation-1",
+      task: "Run the slash-command `/check-deploy` every five minutes.",
+      prompt: "▎ ",
+      expected: ["/loop 5m /check-deploy"],
+      hints: [
+        "All slash commands start with `/`.",
+        "The format is `/loop <interval> <slash-command-to-run>`.",
+        "Five minutes is `5m`.",
+      ],
+      successOutput: "Looping /check-deploy every 5m. Use Ctrl-C to stop.",
     },
     {
-      type: "knowledge",
-      q: "Three weeks ago you set up `/loop 1h /summarize-pr-comments`. You haven't actually read any of the outputs. What's the right move?",
-      a: "Stop the loop. Every recurring loop is a recurring inbox; an inbox you ignore becomes noise that drowns out signal everywhere else. A loop whose output you don't read isn't tracking work — it's generating slop.",
+      kind: "choice",
+      id: "automation-2",
+      question:
+        "You set up `/loop 1h /summarize-pr-comments` three weeks ago. You haven't read any of the outputs. What's the right move?",
+      options: [
+        { text: "Tighten the loop interval to surface fewer items." },
+        { text: "Stop the loop.", correct: true },
+        { text: "Pipe the outputs to a Notion page so they accumulate." },
+        { text: "Ask Claude to summarize the summaries." },
+      ],
+      explanation:
+        "Every recurring loop is a recurring inbox. An inbox you ignore becomes noise that drowns out signal everywhere else. A loop whose output you don't read isn't tracking work — it's generating slop.",
     },
     {
-      type: "knowledge",
-      q: "Which is safer to run with auto-mode on: `gh pr list` or `git push`? Why?",
-      a: "`gh pr list` — read-only, no state change. `git push` touches shared state; once pushed, undoing affects collaborators. The cap-auto-mode rule auto-approves only the read-only and locally-reversible.",
+      kind: "choice",
+      id: "automation-3",
+      question:
+        "Auto-mode is on. Which command is safer to let through automatically?",
+      options: [
+        { text: "`gh pr list`", correct: true },
+        { text: "`git push`" },
+        { text: "Both are equally safe." },
+        { text: "Both are equally dangerous." },
+      ],
+      explanation:
+        "`gh pr list` is read-only — no state change. `git push` touches shared state; once pushed, undoing affects collaborators. Cap auto-mode at the read-only and locally-reversible.",
     },
   ],
   models: [
     {
-      type: "skills",
-      q: "You're about to do a security review on a payments migration. Write the command to dial Claude up before you start.",
-      a: "`/effort xhigh`. When you're back to exploration, run `/effort` again and pick a lower tier — high-effort exploration burns iteration speed for depth you don't need yet.",
+      kind: "terminal",
+      id: "models-1",
+      task: "Dial the model up to xhigh effort before a security review on a payments migration.",
+      prompt: "▎ ",
+      expected: ["/effort xhigh"],
+      hints: [
+        "The slash command is named after the knob.",
+        "Effort tiers include `low`, `medium`, `high`, `xhigh`.",
+      ],
+      successOutput: "Effort set to xhigh.",
     },
     {
-      type: "knowledge",
-      q: "Why is `xhigh` usually the wrong tier for the *exploration* phase of a problem?",
-      a: "Exploration is iterative — you want fast back-and-forth to test hypotheses cheaply. xhigh trades speed for depth, which is the wrong trade before you know which path matters. Save it for the one decision that earns the wait.",
+      kind: "choice",
+      id: "models-2",
+      question:
+        "Why is `xhigh` usually the wrong tier for the *exploration* phase of a problem?",
+      options: [
+        { text: "xhigh produces less accurate answers in exploration." },
+        {
+          text: "Exploration needs fast iteration; xhigh trades speed for depth before you know which path matters.",
+          correct: true,
+        },
+        { text: "xhigh requires a paid plan upgrade." },
+        { text: "xhigh disables tool use during exploration." },
+      ],
+      explanation:
+        "Save xhigh for the one decision that earns the wait. While you're exploring a space of possibilities, fast cycles beat per-iteration depth.",
     },
   ],
   decision: [
     {
-      type: "knowledge",
-      q: "You want to type `/triage-inbox` once a morning to categorize unread email. Which two primitives are you composing — and what would a third one add?",
-      a: "A Skill (the `/triage-inbox` invocation) plus an MCP server (Gmail). A `/loop 24h /triage-inbox` would make it scheduled rather than manual — though if you'd rather decide each morning whether to triage, you don't need it.",
+      kind: "choice",
+      id: "decision-1",
+      question:
+        "You want to type `/triage-inbox` once a morning to categorize unread email. Which two primitives are you composing?",
+      options: [
+        { text: "Subagent + Hook" },
+        { text: "Skill + MCP server", correct: true },
+        { text: "Conductor + Plugin" },
+        { text: "Agent Team + Monitor" },
+      ],
+      explanation:
+        "A Skill (the `/triage-inbox` invocation) plus an MCP server (Gmail). Add `/loop 24h /triage-inbox` if you want it scheduled — though if you'd rather decide each morning whether to triage, you don't need it.",
     },
     {
-      type: "knowledge",
-      q: "You've been hired to ship a feature in a codebase you've never seen. What's the first primitive to reach for, before you write any code?",
-      a: "A Subagent — specifically `Explore`. It does the messy initial reading without polluting your main session and returns a structured summary you can act on. Skipping this usually means a session that runs out of context room halfway through the work.",
+      kind: "choice",
+      id: "decision-2",
+      question:
+        "You've been hired to ship a feature in a codebase you've never seen. What's the first primitive to reach for, before writing any code?",
+      options: [
+        { text: "A Skill — package the workflow up front." },
+        {
+          text: "A Subagent (Explore) — do the messy initial reading without polluting your main context.",
+          correct: true,
+        },
+        { text: "A Hook — enforce typecheck before commit." },
+        { text: "A Plugin — install the codebase's standard integrations." },
+      ],
+      explanation:
+        "Skipping this step usually means a session that runs out of context room halfway through the work. Explore returns a structured summary you can act on, with your main session still clean.",
     },
   ],
   "use-cases": [
     {
-      type: "skills",
-      q: "Sketch the SKILL.md for a `weekly-status` skill that respects the structure-not-prose rule. What sections would it produce empty?",
-      a: "Headers like `## Shipped this week`, `## In flight`, `## Blocked / risks`, `## Asks of others` — with italicized prompts beneath each (\"What's at risk and why?\"). Nothing pre-filled. The skill saves you 10 minutes of formatting and ensures you don't skip the awkward sections; the substance stays yours.",
+      kind: "reveal",
+      id: "use-cases-1",
+      task: "Sketch the section headers for a `weekly-status` skill that respects the structure-not-prose rule. The skill should produce empty sections you fill in yourself — no pre-written content. Write what the skill outputs.",
+      answer:
+        "Something like:\n\n## Shipped this week\n*What landed? Link the PRs.*\n\n## In flight\n*What's mid-stream? Where's the risk?*\n\n## Blocked / risks\n*What's stuck and why? Whose call is it?*\n\n## Asks of others\n*What do you need from whom, by when?*\n\nThe skill saves you 10 minutes of formatting and ensures you don't skip the awkward sections. The substance stays yours.",
     },
     {
-      type: "knowledge",
-      q: "You're tempted to add a step to your inbox-triage skill that drafts replies. What's the case against?",
-      a: "Drafting collapses triage into auto-reply — and the decision of *what to say* is most of the email work. Outsourcing it sends text you didn't think. Triage stays useful only if it stops at \"these need you\" and hands you a shorter inbox.",
+      kind: "choice",
+      id: "use-cases-2",
+      question:
+        "You're tempted to add a step to your inbox-triage skill that drafts replies. What's the case against?",
+      options: [
+        { text: "It's slower than letting Claude triage and reply at once." },
+        {
+          text: "Drafting collapses triage into auto-reply — and the *what to say* decision is the work itself.",
+          correct: true,
+        },
+        { text: "Gmail's API doesn't support drafts." },
+        { text: "It would burn through your token budget." },
+      ],
+      explanation:
+        "Triage stays useful only if it stops at \"these need you\" and hands you a shorter inbox. Drafting on autopilot sends text you didn't think.",
     },
   ],
   patterns: [
     {
-      type: "knowledge",
-      q: "Claude just recommended a refactoring approach. The make-Claude-argue-back pattern says you ask… what, exactly?",
-      a: "Something like: \"What's the strongest case against this? What would have to be true for this to be wrong?\" — and read the answer slowly. The point is forcing past the helpfulness bias; Claude trends toward agreement when you ask if your idea is good.",
+      kind: "choice",
+      id: "patterns-1",
+      question:
+        "Claude just recommended a refactoring approach. The make-Claude-argue-back pattern says you ask…",
+      options: [
+        { text: '"Are you sure?"' },
+        {
+          text: '"What\'s the strongest case against this? What would have to be true for it to be wrong?"',
+          correct: true,
+        },
+        { text: '"What did the previous engineer do?"' },
+        { text: '"Show me the test plan."' },
+      ],
+      explanation:
+        "The point is forcing past the helpfulness bias. Claude trends toward agreement when you ask if your idea is good — explicitly request the disagreement.",
     },
     {
-      type: "knowledge",
-      q: "Why does the friction-audit pattern argue against automating PRD *writing* but in favor of automating PRD *formatting*?",
-      a: "Writing the substance is the moment you decide what the product is — that friction is load-bearing thinking. Formatting (headers, structure) is mechanical; removing it removes nothing important. Automate the second; preserve the first.",
+      kind: "choice",
+      id: "patterns-2",
+      question:
+        "Why does the friction-audit pattern argue against automating PRD *writing* but in favor of automating PRD *formatting*?",
+      options: [
+        { text: "Writing takes longer than formatting." },
+        {
+          text: "Writing is the moment you decide what the product *is* — that friction is load-bearing thinking. Formatting is mechanical.",
+          correct: true,
+        },
+        { text: "Claude is bad at writing PRDs." },
+        { text: "Formatting is harder for humans than writing." },
+      ],
+      explanation:
+        "Some friction is the work. Automate the mechanical; preserve the part where the thinking happens.",
     },
     {
-      type: "knowledge",
-      q: "You have three Claude sessions open today: code, research, PRD planning. Mid-afternoon you want to ask a quick research question while in the code session. What does one-window-one-purpose say to do?",
-      a: "Ask in the research session, not the code session. Mixing pollutes context — the model is already \"thinking in code\" and you'll get worse answers, plus you'll degrade the code session's clarity for the rest of the day. The context switch costs less than the cleanup.",
+      kind: "choice",
+      id: "patterns-3",
+      question:
+        "You have three Claude sessions open: code, research, PRD planning. Mid-afternoon you want to ask a quick research question while in the code session. What does one-window-one-purpose say to do?",
+      options: [
+        { text: "Ask in the code session — the context switch isn't worth it." },
+        { text: "Ask in the research session.", correct: true },
+        { text: "Open a fourth session." },
+        { text: "Use a Subagent in the code session." },
+      ],
+      explanation:
+        "Mixing pollutes context. The model is already \"thinking in code\" — you'll get worse answers and degrade the code session's clarity for the rest of the day. The switch costs less than the cleanup.",
     },
   ],
   "anti-patterns": [
     {
-      type: "knowledge",
-      q: "A teammate uses Claude to summarize every Slack thread before reading it. Which anti-pattern is this, and what's the failure mode?",
-      a: "Auto-summarizing things you should be reading. Summaries drop the specific phrase, the buried qualifier, the throwaway example — usually the bit that actually matters. Use summaries to *triage* what to read; don't substitute them for reading.",
+      kind: "choice",
+      id: "anti-patterns-1",
+      question:
+        "A teammate uses Claude to summarize every Slack thread before reading it. Which anti-pattern is this?",
+      options: [
+        { text: "Skill sprawl." },
+        { text: "Auto-summarizing things you should be reading.", correct: true },
+        { text: "Subagent stacking." },
+        { text: "Blanket auto-mode." },
+      ],
+      explanation:
+        "Summaries drop the specific phrase, the buried qualifier, the throwaway example — usually the bit that actually matters. Use summaries to *triage* what to read; don't substitute them for reading.",
     },
     {
-      type: "knowledge",
-      q: "You've written 25 skills in two months. Six get regular use; 19 you've used once. What should you do, and why?",
-      a: "Delete the 19. Skill sprawl is invisible debt — autocomplete clutter, naming collisions, dead code paths. If you needed any of those skills, you'll write better ones the next time you hit the case. Repetition is the test, and they failed it.",
+      kind: "choice",
+      id: "anti-patterns-2",
+      question:
+        "You've written 25 skills in two months. Six get regular use; 19 you've used once. What's the right move?",
+      options: [
+        { text: "Tag the unused ones for future reference." },
+        { text: "Delete the 19 unused ones.", correct: true },
+        { text: "Reorganize them into a plugin." },
+        { text: "Wait — they may earn their keep later." },
+      ],
+      explanation:
+        "Skill sprawl is invisible debt: autocomplete clutter, naming collisions, dead code paths. Repetition is the test, and they failed it. If you needed any, you'll write better ones next time.",
     },
     {
-      type: "knowledge",
-      q: "Why is asking Claude \"is this a good idea?\" worse than asking \"what's the case against this idea?\"",
-      a: "The first triggers the helpfulness bias — Claude will usually find the steelman of your position and you'll feel right. The second forces dissent: you get the actual failure modes. You're not paying for praise; you're paying for the disagreement you can't easily generate yourself.",
+      kind: "choice",
+      id: "anti-patterns-3",
+      question:
+        'Why is asking Claude "is this a good idea?" worse than asking "what\'s the case against this idea?"',
+      options: [
+        { text: "The first is grammatically ambiguous." },
+        {
+          text: "The first triggers the agreement bias; the second forces dissent.",
+          correct: true,
+        },
+        { text: "The first uses more tokens." },
+        { text: "There's no real difference." },
+      ],
+      explanation:
+        "Claude trends toward agreement — you'll usually get a steelman of your position and feel right. The case-against framing forces it to surface failure modes you can't easily generate yourself.",
     },
   ],
   cheatsheet: [
     {
-      type: "skills",
-      q: "You forget which subagents are available right now. Which command lists them?",
-      a: "`/agents`. It also lets you pick one to delegate to in the same step.",
+      kind: "terminal",
+      id: "cheatsheet-1",
+      task: "List the subagents available in your current Claude Code session.",
+      prompt: "▎ ",
+      expected: ["/agents"],
+      hints: ["A single slash command — no arguments needed to list."],
+      successOutput: "Available subagents: Explore, Plan, general-purpose…",
     },
     {
-      type: "skills",
-      q: "Brand-new repo, no Claude config yet. Which command bootstraps a `CLAUDE.md` describing the codebase?",
-      a: "`/init` — generates a starter `CLAUDE.md`. Edit it after; the auto-generated version is a draft, not the deliverable. The skill is in the editing.",
+      kind: "terminal",
+      id: "cheatsheet-2",
+      task: "Brand-new repo, no Claude config yet. Bootstrap a `CLAUDE.md` describing the codebase.",
+      prompt: "▎ ",
+      expected: ["/init"],
+      hints: ["The slash command is named after what it does."],
+      successOutput:
+        "Generating CLAUDE.md… (edit it after — the auto-generated version is a draft.)",
     },
   ],
 };
