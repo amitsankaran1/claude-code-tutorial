@@ -6,6 +6,7 @@ import { DecisionTable } from "@/components/DecisionTable";
 import { UseCaseCard } from "@/components/UseCaseCard";
 import { PatternCard } from "@/components/PatternCard";
 import { AntiPatternCard } from "@/components/AntiPatternCard";
+import { QuizBlock } from "@/components/QuizBlock";
 import {
   BIG_PICTURE,
   TERMINAL_101,
@@ -17,6 +18,7 @@ import {
   ANTI_PATTERNS,
   CHEATSHEET,
   SOURCES,
+  QUIZZES,
 } from "@/lib/content";
 
 export default function Page() {
@@ -87,6 +89,7 @@ export default function Page() {
                 </dl>
               </article>
             </div>
+            <QuizBlock questions={QUIZZES["terminal-101"]} />
           </Section>
 
           <Section
@@ -128,6 +131,7 @@ export default function Page() {
                 ))}
               </div>
             </div>
+            <QuizBlock questions={QUIZZES["big-picture"]} />
           </Section>
 
           <Section
@@ -141,6 +145,7 @@ export default function Page() {
                 <FeatureCard key={f.id} feature={f} />
               ))}
             </div>
+            <QuizBlock questions={QUIZZES["primitives"]} />
           </Section>
 
           <Section
@@ -154,6 +159,7 @@ export default function Page() {
                 <FeatureCard key={f.id} feature={f} />
               ))}
             </div>
+            <QuizBlock questions={QUIZZES["automation"]} />
           </Section>
 
           <Section
@@ -167,6 +173,7 @@ export default function Page() {
                 <FeatureCard key={f.id} feature={f} />
               ))}
             </div>
+            <QuizBlock questions={QUIZZES["models"]} />
           </Section>
 
           <Section
@@ -176,6 +183,7 @@ export default function Page() {
             intro="When you want to do X, reach for Y. The fastest way to navigate the feature surface."
           >
             <DecisionTable />
+            <QuizBlock questions={QUIZZES["decision"]} />
           </Section>
 
           <Section
@@ -189,6 +197,7 @@ export default function Page() {
                 <UseCaseCard key={u.id} useCase={u} />
               ))}
             </div>
+            <QuizBlock questions={QUIZZES["use-cases"]} />
           </Section>
 
           <Section
@@ -202,6 +211,7 @@ export default function Page() {
                 <PatternCard key={p.id} pattern={p} />
               ))}
             </div>
+            <QuizBlock questions={QUIZZES["patterns"]} />
           </Section>
 
           <Section
@@ -215,6 +225,7 @@ export default function Page() {
                 <AntiPatternCard key={a.id} anti={a} />
               ))}
             </div>
+            <QuizBlock questions={QUIZZES["anti-patterns"]} />
           </Section>
 
           <Section
@@ -240,6 +251,7 @@ export default function Page() {
                 ))}
               </ul>
             </div>
+            <QuizBlock questions={QUIZZES["cheatsheet"]} />
           </Section>
 
           <Section id="sources" number="11" title="Sources">
