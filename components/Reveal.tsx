@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { RevealExerciseData } from "@/lib/content";
 import { useProgress } from "@/lib/progress";
 
@@ -14,6 +14,10 @@ export function Reveal({
   const { isCompleted, markCompleted } = useProgress();
   const done = isCompleted(data.id);
   const [revealed, setRevealed] = useState(done);
+
+  useEffect(() => {
+    if (done && !revealed) setRevealed(true);
+  }, [done, revealed]);
 
   return (
     <div className="rounded-lg border border-ink-200 bg-white p-5">
